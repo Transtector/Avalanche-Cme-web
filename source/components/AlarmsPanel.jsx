@@ -134,7 +134,7 @@ var AlarmsPanel = React.createClass({
 	componentWillUnmount: function() {
 
 		CHANNELS_LOADING.forEach(function(chId) {
-			Store.removeChangeListener(Constants.CHANNEL + chId.toUpperCase(), this._onChannelChange);
+			Store.removeChangeListener(Constants.CHANNEL + chId.toUpperCase(), this._onChannelLoaded);
 		}, this);
 
 		Store.removeChangeListener(Constants.DEVICE, this._onStoreChange);		
