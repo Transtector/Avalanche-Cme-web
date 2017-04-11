@@ -1,0 +1,12 @@
+# Build code
+style.css
+bundle.js
+
+# Mac/Windows OS Junk
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+node_modules

@@ -1,0 +1,6 @@
+[submodule "source/flot"]
+	path = source/flot
+	url = https://github.com/flot/flot.git
+[submodule "source/keymaster"]
+	path = source/keymaster
+	url = https://github.com/madrobby/keymaster.git
