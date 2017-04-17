@@ -4,6 +4,8 @@
  *
  * Component to group the Cme network configuration.
  */
+'use strict';
+
 var React = require('react');
 
 var Actions = require('../Actions');
@@ -18,7 +20,7 @@ var NetConfig = React.createClass({
 	},
 
 	render: function() {
-		changesPending = Object.keys(this.props.config).some(function(key) {
+		var changesPending = Object.keys(this.props.config).some(function(key) {
 			return this.props.config[key] !== this.state[key];
 		}, this);
 
