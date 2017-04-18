@@ -18,6 +18,18 @@ echo
 echo "  Building Cme-web package: "${PACKAGE}
 echo
 
+if [ ! -f ${SRC}/bundle.js ]; then
+	echo "  ERROR: No built Javascript (bundle.js)!  Make sure to build the application first..."
+	echo
+	exit 1
+fi
+
+if [ ! -f ${SRC}/style.css ]; then
+	echo  "  ERROR: No built CSS styles (style.css)!  Make sure to build the application first..."
+	echo
+	exit 1
+fi
+
 # Copy files over to dist/
 mkdir -p ${DIST}
 pushd ${DIST}
@@ -34,4 +46,5 @@ tar -czvf ../${PACKAGE} .
 popd
 rm -rf ${DIST}
 
-echo "Done!"
+echo "  Done!"
+echo
