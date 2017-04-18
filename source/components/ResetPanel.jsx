@@ -21,7 +21,8 @@ var ResetPanel = React.createClass({
 
 		return { 
 			recoveryMode: false,
-			factoryReset: false
+			factoryReset: false,
+			powerOff: false
 		};
 	},
 
@@ -51,6 +52,17 @@ var ResetPanel = React.createClass({
 							Reset Configuration to Factory Defaults
 						</label>
 					</div>
+
+					<div className='checkbox-wrapper'>
+						<label htmlFor='powerOff'>
+							<input id='powerOff'
+								type='checkbox'
+								checked={this.state.powerOff}
+								onChange={this._update} />
+							Power Down the CME Device
+						</label>
+					</div>
+
 				</div>
 
 				<div className="input-group-buttons">
@@ -69,8 +81,12 @@ var ResetPanel = React.createClass({
 	},
 
 	_restart: function() {
-		if (confirm("CME device will be restarted.\n\nOk to continue?\n\n"))
-			Actions.restart(this.state.recoveryMode, this.state.factoryReset);
+		var msg = 'The CME device will be ' + (this.state.powerOff ? 'shut down' : 'restarted') + '.';
+		msg += '\n\nOk to continue?\n\n';
+
+		if (confirm(msg)){
+			Actions.restart(this.state.powerOff, this.state.recoveryMode, this.state.factoryReset);
+		}
 	}
 });
 

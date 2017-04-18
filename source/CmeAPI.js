@@ -95,10 +95,10 @@ var CmeAPI = {
 		});
 	},
 
-	restart: function(recovery_mode, factory_reset) {
+	restart: function(power_off, recovery_mode, factory_reset) {
 		return $.ajax({
 			url: API.restart,
-			data: { recovery_mode: !!recovery_mode, factory_reset: !!factory_reset },
+			data: { power_off: !!power_off, recovery_mode: !!recovery_mode, factory_reset: !!factory_reset },
 			dataType: 'json'
 		});
 	},

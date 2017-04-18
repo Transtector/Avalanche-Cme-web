@@ -123,10 +123,10 @@ var Actions = {
 			.fail(onError);
 	},
 
-	restart: function(recovery_mode, factory_reset) {
-		if (!dispatchRequest('restarting device')) return;
+	restart: function(power_off, recovery_mode, factory_reset) {
+		if (!dispatchRequest('powering off and/or restarting device')) return;
 
-		CmeAPI.restart(recovery_mode, factory_reset)
+		CmeAPI.restart(power_off, recovery_mode, factory_reset)
 			.fail(onError)
 			.always(Actions.logout);
 	},
