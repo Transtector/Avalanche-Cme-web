@@ -1,6 +1,7 @@
 # Build code
 style.css
 bundle.js
+*.tgz
 
 # Mac/Windows OS Junk
 Thumbs.db
