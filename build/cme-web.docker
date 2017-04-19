@@ -1,0 +1,18 @@
+# Builds a volume container based on the cme-base docker image (Alpine, Python, Rrdtool).
+# This docker implements the Cme device web application layer.
+
+# Start with cme-base docker image
+FROM cme-base
+
+MAINTAINER James Brunner <james.brunner@smithsmicrowave.com>
+
+# Create the web root folder, /www, and pull the indicated Cme-web release.
+RUN mkdir /www && \
+	curl -sS https://s3.amazonaws.com/transtectorpublicdownloads/Cme/1500-007-v1.0.0-SWARE-CME_WEB.tgz | \
+	tar -xzC /www
+
+# Make the web root folder a volume (Cme-api docker will get run w/--volumes-from this docker).
+VOLUME /www
+
+# just a volume container - don't run anything
+CMD ["/bin/true"]
