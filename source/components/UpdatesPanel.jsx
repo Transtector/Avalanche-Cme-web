@@ -56,127 +56,12 @@ var UpdatesPanel = React.createClass({
 
 	render: function() {
 
-		var pending = this.state.updates.pending || false; // false or name of update file
-
-		// reset installing flag if we're rendering w/pending update
-		if (pending && this.state.installing)
+		// reset installing flag if we're rendering w/pending updates
+		if (this.state.updates.pending.length > 0 && this.state.installing) {
 			this.setState({ installing: false });
-
-		function renderUpdateRadioItem(self, id) {
-
-			return (
-				<label key={id} htmlFor={id}>
-					<input type="radio" name='updateRadioItem'
-							id={id}
-							onChange={self._selectUpdate}
-							checked={self.state.install == id} />
-					{id.split('_')[1]}
-				</label>
-			);
 		}
-
-		var updateContent = (function(self, p) {
-
-			if (p) {
-				// pending updates have much simpler UI
-				return (
-					<div className='input-group-cluster no-border'>
-						<label htmlFor='pending-update'>This update is ready</label>
-						<input id='pending-update'
-							type='text'
-							value={p}
-							readOnly='true' />
-
-						<p>This update will be used after restarting the device. 
-							Click Restart to proceed or Cancel to remove the update.</p>
-					</div>
-				);
-
-			} else {
-
-				var progressActive, progressVal;
-				
-				if (self.state.progress) {
-					progressActive = 'active';
-					progressVal = 100 * (self.state.progress.value / self.state.progress.max);
-				}
-
-				return (
-					<div className='input-group-cluster no-border'>
-
-						<label htmlFor='updates-list-usb'>External USB drive</label>
-						<div id="updates-list-usb" className="radio-group">
-							{self.state.updates.usb.length > 0
-								? self.state.updates.usb.map(function(update) {
-									return renderUpdateRadioItem(this, 'usb_' + update);
-								}, self)
-								: <p>Nothing found</p>
-							}
-						</div>
-
-						<label htmlFor='updates-list-web'>From the web</label>
-						<div id="updates-list-web" className="radio-group">
-							{self.state.updates.web.length > 0
-								? self.state.updates.web.map(function(update) {
-									return renderUpdateRadioItem(this, 'web_' + update);
-								}, self)
-								: <p>Nothing found</p>
-							}
-						</div>
-						
-						<label htmlFor='updates-list-uploaded'>Uploaded</label>
-						<div id="updates-list-uploaded" className="radio-group">
-							{self.state.updates.uploads.map(function(update) {
-								return renderUpdateRadioItem(this, 'upload_' + update);
-							}, self)}
-						</div>
-
-						<div className='upload-widget'>
-							<DropTarget onDrop={self._uploadFile}>
-								<h1>Drag and drop or click here</h1>
-								<h2>to upload an update (max 500 MiB)</h2>
-							</DropTarget>
-
-							 <progress className={progressActive} max="100" value={progressVal}>
-            					{/* Browsers that support HTML5 progress element will ignore the html
-            						inside `progress` element. Whereas older browsers will ignore the
-            						`progress` element and instead render the html inside it. */}
-            					<div className="progress-bar">
-                					<span style={{ width: progressVal + '%' }}>{progressVal}%</span>
-            					</div>
-        					</progress>
-						</div>
-					</div>
-				);
-			}
-		})(this, pending);
-
-		var updateButtons = (function(self, p) {
-			if (p) {
-				return (
-					<div className="input-group-buttons">
-						<button className='btn' 
-								onClick={self._onCancel}
-								disabled={!p}>Cancel</button>
-
-						<button className='btn' 
-								onClick={self._onRestart}
-								disabled={!p}>Restart</button>
-					</div>
-				);
-			} else {
-				return (
-					<div className="input-group-buttons">
-						<button className='btn full-width' 
-								onClick={self._onInstall}
-								disabled={!self.state.install || self.state.installing}>Install</button>
-					</div>
-				);				
-			}
-		})(this, pending);
-
-		var screen = classNames({
-			screen: true,
+		
+		var screenClass = classNames('screen', {
 			active: this.state.installing
 		});
 
@@ -185,15 +70,133 @@ var UpdatesPanel = React.createClass({
 				onExpand={this._startPoll} 
 				onCollapse={this._stopPoll}>
 
-				{updateContent}
+				{
+					this.state.updates.pending.length > 0
+						? this._renderPendingUpdates()
+						: this._renderAvailableUpdates()
+				}
 
-				{updateButtons}
+				{this._renderUpdateButtons()}
 
-				<div className={screen}>&nbsp;</div>
+				<div className={screenClass}>&nbsp;</div>
 
 			</InputGroup>
 		);
 	},
+
+	_renderRadioItem: function(id) {
+		return (
+			<label key={id} htmlFor={id}>
+				<input type="radio" name='updateRadioItem'
+						id={id}
+						onChange={this._selectUpdate}
+						checked={this.state.install == id} />
+				{id.split('_')[1]}
+			</label>
+		);
+	},
+
+	_renderAvailableUpdates: function() {
+		return (
+			<div className='input-group-cluster no-border'>
+
+				<label htmlFor='updates-list-usb'>External USB drive</label>
+				<div id="updates-list-usb" className="radio-group">
+					{this.state.updates.usb.length > 0
+						? this.state.updates.usb.map(function(update) {
+							return this._renderRadioItem('usb_' + update);
+						}, this)
+						: <p>Nothing found</p>
+					}
+				</div>
+
+				<label htmlFor='updates-list-web'>From the web</label>
+				<div id="updates-list-web" className="radio-group">
+					{this.state.updates.web.length > 0
+						? this.state.updates.web.map(function(update) {
+							return this._renderRadioItem('web_' + update);
+						}, this)
+						: <p>Nothing found</p>
+					}
+				</div>
+						
+				<label htmlFor='updates-list-uploaded'>Uploaded</label>
+				<div id="updates-list-uploaded" className="radio-group">
+					{this.state.updates.uploads.map(function(update) {
+						return this._renderRadioItem('upload_' + update);
+					}, this)}
+				</div>
+
+				{this._renderUploadWidget()}
+
+			</div>
+		);
+	},
+
+	_renderUploadWidget: function() {
+		var progressClass = classNames({ 'active': this.state.progress });
+		var progressVal = this.state.progress && (100 * (this.state.progress.value / this.state.progress.max));
+
+		return (
+			<div className='upload-widget'>
+				<DropTarget onDrop={this._uploadFile}>
+					<h1>Drag and drop or click here</h1>
+					<h2>to upload an update (max 500 MiB)</h2>
+				</DropTarget>
+
+				 <progress className={progressClass} max="100" value={progressVal}>
+					{/* Browsers that support HTML5 progress element will ignore the html
+						inside `progress` element. Whereas older browsers will ignore the
+						`progress` element and instead render the html inside it. */}
+					<div className="progress-bar">
+						<span style={{ width: progressVal + '%' }}>{progressVal}%</span>
+					</div>
+				</progress>
+			</div>
+		);
+	},
+
+	_renderPendingUpdates: function() {
+		return (
+			<div className='input-group-cluster no-border'>
+				<label>These updates are ready</label>
+				<ul className='pending-update'>
+					{
+						this.state.updates.pending.map(function(p, i){
+							return <li key={i}>{p}</li>
+						})
+					}
+				</ul>
+				<p>These updates will be installed upon restarting the device. 
+					Click Restart to proceed or Cancel to remove these updates.</p>
+			</div>
+		);
+	},
+
+	_renderUpdateButtons: function() {
+		var pending = this.state.updates.pending || []; // list of pending update files
+
+		if (pending.length > 0) {
+			return (
+				<div className="input-group-buttons">
+					<button className='btn' 
+							onClick={this._onCancel}>Cancel</button>
+
+					<button className='btn' 
+							onClick={this._onRestart}>Restart</button>
+				</div>
+			);
+		} else {
+			return (
+				<div className="input-group-buttons">
+					<button className='btn full-width' 
+							onClick={this._onInstall}
+							disabled={!this.state.install || this.state.installing}>Install</button>
+				</div>
+			);				
+		}
+	},
+
 
 	_onUpdatesChange: function () {
 		var _this = this;
@@ -232,7 +235,7 @@ var UpdatesPanel = React.createClass({
 
 	_onCancel: function() {
 
-		if (confirm("The pending update will be removed.\n\nOk to continue?\n\n")) {
+		if (confirm("The pending updates will be removed.\n\nOk to continue?\n\n")) {
 			Actions.deleteUpdate();
 		}
 	},
