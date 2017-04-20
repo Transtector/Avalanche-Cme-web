@@ -95,15 +95,14 @@ var AlarmsPanel = React.createClass({
 		Store.addChangeListener(Constants.DEVICE, this._onStoreChange);
 
 		// generate some fake alarms
-		var _this = this;
-
-		CmeAPI.clearFakeAlarms().done(function(msg) {
-			console.log(msg);
-			CmeAPI.insertFakeAlarms().done(function(data) { 
-				console.log(data); 
+		//var _this = this;
+		//CmeAPI.clearFakeAlarms().done(function(msg) {
+		//	console.log(msg);
+		//	CmeAPI.insertFakeAlarms().done(function(data) { 
+		//		console.log(data); 
 
 				// make sure all required channels are loaded into the Store
-				if (!_this._channelsLoaded(_this.state.channels)) {
+				if (!this._channelsLoaded(this.state.channels)) {
 
 					// Load missing channels into Store
 					CHANNELS.forEach(function(chId) {
@@ -117,18 +116,17 @@ var AlarmsPanel = React.createClass({
 
 							Actions.channel(chId, null, null); // this will update the Store.channel_objs
 						}
-					}, _this);
+					}, this);
 
-				} else {
-					
-					// Fire these requests off
+				} else {					
+					// channels are loaded - Fire these requests off
 					_this._requestPowerMonitoring();
 					_this._requestHistory();
 					_this._requestAlarms();
 				}
 
-			});
-		});
+		//	});
+		//});
 	},
 
 	componentWillUnmount: function() {
