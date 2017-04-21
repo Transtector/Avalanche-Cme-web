@@ -39,7 +39,7 @@ var UpdatesPanel = React.createClass({
 		return { 
 			updates: Store.getState().updates,
 			progress: null,
-			install: null,
+			install: [],
 			installing: false
 		 };
 	},
@@ -84,14 +84,20 @@ var UpdatesPanel = React.createClass({
 		);
 	},
 
-	_renderRadioItem: function(id) {
+	_renderUpdateItem: function(index, source, file) {
+
+		var item = {
+			source: source,
+			file: file
+		}
+
 		return (
-			<label key={id} htmlFor={id}>
-				<input type="radio" name='updateRadioItem'
-						id={id}
+			<label key={index} htmlFor={file}>
+				<input type="checkbox"
+						id={file} name={source}
 						onChange={this._selectUpdate}
-						checked={this.state.install == id} />
-				{id.split('_')[1]}
+						checked={this.state.install.indexOf(item) >= 0} />
+				{file}
 			</label>
 		);
 	},
@@ -103,8 +109,8 @@ var UpdatesPanel = React.createClass({
 				<label htmlFor='updates-list-usb'>External USB drive</label>
 				<div id="updates-list-usb" className="radio-group">
 					{this.state.updates.usb.length > 0
-						? this.state.updates.usb.map(function(update) {
-							return this._renderRadioItem('usb_' + update);
+						? this.state.updates.usb.map(function(update, i) {
+							return this._renderUpdateItem(i, 'usb', update);
 						}, this)
 						: <p>Nothing found</p>
 					}
@@ -113,8 +119,8 @@ var UpdatesPanel = React.createClass({
 				<label htmlFor='updates-list-web'>From the web</label>
 				<div id="updates-list-web" className="radio-group">
 					{this.state.updates.web.length > 0
-						? this.state.updates.web.map(function(update) {
-							return this._renderRadioItem('web_' + update);
+						? this.state.updates.web.map(function(update, i) {
+							return this._renderUpdateItem(i + 100, 'web', update);
 						}, this)
 						: <p>Nothing found</p>
 					}
@@ -122,8 +128,8 @@ var UpdatesPanel = React.createClass({
 						
 				<label htmlFor='updates-list-uploaded'>Uploaded</label>
 				<div id="updates-list-uploaded" className="radio-group">
-					{this.state.updates.uploads.map(function(update) {
-						return this._renderRadioItem('upload_' + update);
+					{this.state.updates.uploads.map(function(update, i) {
+						return this._renderUpdateItem(i + 200, 'upload', update);
 					}, this)}
 				</div>
 
@@ -197,7 +203,6 @@ var UpdatesPanel = React.createClass({
 		}
 	},
 
-
 	_onUpdatesChange: function () {
 		var _this = this;
 
@@ -230,7 +235,12 @@ var UpdatesPanel = React.createClass({
 
 	_selectUpdate: function(e) {
 
-		this.setState({ install: e.target.id });
+		var items = this.state.install.slice(0),
+			new_item = { source: e.target.name, file: e.target.id }
+
+		items.push(new_item);
+
+		this.setState({ install: items });
 	},
 
 	_onCancel: function() {
@@ -304,14 +314,14 @@ var UpdatesPanel = React.createClass({
 	},
 
 	_onInstall: function() {
-		if (!this.state.install) return;
+		if (this.state.install.length == 0) return;
 
 		this.setState({ installing: true });
-		var source_name = this.state.install.split('_');
 
-		Actions.installUpdate(source_name[0], source_name[1]);
+		this.state.install.forEach(function(item) {
+			Actions.installUpdate(item.source, item.file);
+		});
 	}
-
 });
 
 module.exports = UpdatesPanel;
