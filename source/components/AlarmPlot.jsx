@@ -150,6 +150,7 @@ var AlarmPlot = React.createClass({
 	},
 
 	_dataSeries: function(zone) {
+		// 'zone' is the start (0) or end (1) of the alarm data
 		var series = [],
 			traces = [ [], [], [], [] ],
 
@@ -170,7 +171,7 @@ var AlarmPlot = React.createClass({
 		// assemble live and consolidated data traces
 		for (var i = 0; i < index_end; i++) {
 
-			var t = 1000 * (start_time + step * i),
+			var t = (start_time + step * i),
 				index = (a.end_ms && zone) ? i + N/2 : i;
 
 			// put phase imbalance trace first, so it renders under the phase traces

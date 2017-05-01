@@ -73,6 +73,16 @@ var AlarmDetailTable = React.createClass({
 								</li>
 							</ul>
 
+							{/*
+								The 'tab' means which set of plots is shown: 
+									0: Input Voltage & PI,
+									1: Output Voltage & PI,
+									2: Output Current
+
+								The 'zone' means event start or event end:
+									0: event start,
+									1: event end
+							*/}
 							<AlarmPlot alarm={alarm} tab={this.state.tab} zone={this.state.zone} onZoneChange={this._setPlotZone} />
 							
 						</td>
