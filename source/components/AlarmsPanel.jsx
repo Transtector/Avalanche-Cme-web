@@ -356,8 +356,8 @@ var AlarmsPanel = React.createClass({
 				CmeAPI.sensorHistory(channel.id, sensor.id, history)
 					.done(function(data) {
 
-						var MIN = data[3].filter(isNumeric),
-							MAX = data[4].filter(isNumeric);
+						var MIN = data && data[3] && data[3].filter(isNumeric),
+							MAX = data && data[4] && data[4].filter(isNumeric);
 
 						var act_low = (MIN.length > 0) 
 								? Math.min.apply(null, MIN)
@@ -433,7 +433,10 @@ var AlarmsPanel = React.createClass({
 
 		// All channels available here - get all channels' first_update timestamp
 		var historyStart = Object.values(this.state.channels).map(function(ch){
-			return ch.first_update * 1000;
+			if (!ch.rrd) {
+				return moment().millisecond(); // no data - get now()
+			}
+			return ch.first_update * 1000; // else return first update timestamp (in ms)
 		});
 
 		// The channel with the longest history has the smallest first_update timestamp

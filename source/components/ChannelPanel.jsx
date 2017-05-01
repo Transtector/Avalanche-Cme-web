@@ -545,6 +545,9 @@ var ChannelPanel = React.createClass({
 
 	_historyDuration: function() {
 		// Display channel time range in plain terms on the history button.
+
+		if (!this.state.ch.rrd) return 'No data';
+
 		var timestamps = [], ts_start, ts_end;
 
 		timestamps.push(this.state.ch.first_update * 1000);
