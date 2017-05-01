@@ -2,6 +2,7 @@
 style.css
 bundle.js
 *.tgz
+*.log
 
 # Mac/Windows OS Junk
 Thumbs.db

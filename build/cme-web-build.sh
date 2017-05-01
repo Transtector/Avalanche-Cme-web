@@ -40,7 +40,7 @@ cp ${SRC}/bundle.js .
 cp ${SRC}/style.css .
 cp -R ${SRC}/legal .
 
-tar -czvf ../${PACKAGE} .
+tar -czvf ../build/${PACKAGE} .
 
 # Done with the built distribution
 popd
