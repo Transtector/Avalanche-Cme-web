@@ -55,11 +55,6 @@ var UpdatesPanel = React.createClass({
 	},	
 
 	render: function() {
-
-		// reset installing flag if we're rendering w/pending updates
-		if (this.state.updates.pending.length > 0 && this.state.installing) {
-			this.setState({ installing: false });
-		}
 		
 		var screenClass = classNames('screen', {
 			active: this.state.installing
@@ -71,7 +66,7 @@ var UpdatesPanel = React.createClass({
 				onCollapse={this._stopPoll}>
 
 				{
-					this.state.updates.pending.length > 0
+					this.state.updates.pending.length
 						? this._renderPendingUpdates()
 						: this._renderAvailableUpdates()
 				}
@@ -90,13 +85,19 @@ var UpdatesPanel = React.createClass({
 			source: source,
 			file: file
 		}
+		
+		var pendingInstall = this.state.install.some(function (pending_item) {
+			return pending_item.source == item.source && pending_item.file == item.file;
+		});
+
+		var key = source + '_' + index + '_' + file;
 
 		return (
-			<label key={index} htmlFor={file}>
+			<label key={key} htmlFor={key}>
 				<input type="checkbox"
-						id={file} name={source}
+						id={key} name={source} value={file}
 						onChange={this._selectUpdate}
-						checked={this.state.install.indexOf(item) >= 0} />
+						checked={pendingInstall} />
 				{file}
 			</label>
 		);
@@ -197,18 +198,23 @@ var UpdatesPanel = React.createClass({
 				<div className="input-group-buttons">
 					<button className='btn full-width' 
 							onClick={this._onInstall}
-							disabled={!this.state.install || this.state.installing}>Install</button>
+							disabled={!this.state.install.length || this.state.installing}>Install</button>
 				</div>
 			);				
 		}
 	},
 
 	_onUpdatesChange: function () {
-		var _this = this;
+		var _this = this,
+			_newUpdates = Store.getState().updates,
+			_newInstalling = this.state.installing && !_newUpdates.pending.length;
 
-		this.setState({ updates: Store.getState().updates }, function () {
+		// only setState if updates has changed...
+		if (JSON.stringify(_newUpdates) == JSON.stringify(this.state.updates)) return;
+
+		this.setState({ updates: _newUpdates, installing: _newInstalling }, function () {
 			// Keep polling if we don't have pending update
-			if (!_this.state.updates.pending  && _this._pollStartTime) {
+			if (_this.state.updates.pending.length == 0  && _this._pollStartTime) {
 
 				var age = moment().valueOf() - this._pollStartTime,
 					period = (age >= _this.props.pollPeriod)
@@ -236,9 +242,22 @@ var UpdatesPanel = React.createClass({
 	_selectUpdate: function(e) {
 
 		var items = this.state.install.slice(0),
-			new_item = { source: e.target.name, file: e.target.id }
+			item = { source: e.target.name, file: e.target.value };
 
-		items.push(new_item);
+		if (e.target.checked) {
+			// add the item to the install array
+			items.push(item);
+
+		} else {
+
+			// remove the item from the install array
+			var index = items.findIndex(function(install_item) {
+				return install_item.source == item.source && install_item.file == item.file;
+			});
+			if (index > -1) {
+				items.splice(index, 1);
+			}
+		}
 
 		this.setState({ install: items });
 	},
@@ -263,7 +282,9 @@ var UpdatesPanel = React.createClass({
 		// 		name must match pattern: '1500-???-v*-SWARE-CME.tgz'
 		//		max size 500 MB (500*1024*1024)
 
-		var re = /1500\-[0-9]{3}\-v[0-9]+\.[0-9]+\.[0-9]+\-SWARE\-CME\.tgz/i;
+		// Semver matching regex
+		var re = /1500\-[0-9]{3}\-v(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[\da-z\-]+(?:\.[\da-z\-]+)*)?(?:\+[\da-z\-]+(?:\.[\da-z\-]+)*)?-SWARE\-CME_.+\.pkg\.tgz/ig
+		
 		var max_size = 500 * 1024 * 1024; // 500 MiB (also checked on server)
 				
 		if (!files) return;

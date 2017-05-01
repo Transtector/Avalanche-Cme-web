@@ -120,9 +120,9 @@ var AlarmsPanel = React.createClass({
 
 				} else {					
 					// channels are loaded - Fire these requests off
-					_this._requestPowerMonitoring();
-					_this._requestHistory();
-					_this._requestAlarms();
+					this._requestPowerMonitoring();
+					this._requestHistory();
+					this._requestAlarms();
 				}
 
 		//	});
@@ -201,7 +201,7 @@ var AlarmsPanel = React.createClass({
 								{startDate.format('[Week] w, YYYY')}
 							</button>
 						</h2>
-						<h3 className='date-range'><span>{startDate.format(dateFormat)}</span> through <span>{endDate.format(dateFormat)}</span></h3>
+						<h3 className='date-range'><span>{startDate.format(dateFormat)}</span> ~ <span>{endDate.format(dateFormat)}</span></h3>
 					</div>
 
 					<h2>Site Information</h2>
