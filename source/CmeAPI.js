@@ -292,10 +292,11 @@ var CmeAPI = {
 		});
 	},
 
-	channelConfig: function(id) {
+	channelConfig: function(id, cfg) {
 		return $.ajax({
 			url: API.channel + parseInt(id.slice(2)) + '/config',
-			data: null,
+			method: (typeof cfg == 'object') ? 'POST': 'GET',
+			data: (typeof cfg == 'object') ? JSON.stringify(cfg) : null,
 			dataType: 'json',
 			contentType: 'application/json; charset=UTF-8'
 		});

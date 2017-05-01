@@ -53,47 +53,18 @@ var CmeCalibrate = React.createClass({
 	
 	componentDidMount: function() {
 
-		var _this = this;
-
 		// read device info
-		CmeAPI.device()
-			.done(function(d) {
-				_this._cache.device = d['device'];
-				_this.setState({ device: _this._validateDevice(d['device']) });
-
-				// Send a request to populate the data array for the identified channel.
-				// We're not using the Action & Store to monitor channel data, however, as it
-				// will continue to update on the parent page.  Here we'll just use the
-				// CmeAPI call directly, and process the return.
-				CmeAPI.channels()
-					.done(function(chs) {
-						chs['channels'].forEach(function(ch) {
-							CmeAPI.channelConfig(ch)
-								.done(function(ch_cfg){
-									ch_cfg['id'] = ch;
-									_this._cache.channels.push(ch_cfg);
-									_this._cache.channels.sort(function(a, b) {
-										return parseInt(a.id.slice(2)) - parseInt(b.id.slice(2));
-									});
-									_this.setState({ channels: _this._validateChannels(_this._cache.channels) });
-								})
-								.fail(error);
-						});
-					})
-					.fail(error);
-			})
-			.fail(error);
+		this._getDeviceConfig();
+		this._getChannelConfig();
 	},
 
 	render: function() {
 		if (!this.state.device)
 			return <div className='loaderWrapper'><div className='loader'>Loading...</div></div>;
 
-		var changesPending = this._checkDeviceChanged();
+		var changesPending = this._checkDeviceChanged() || this._checkChannelsChanged();
 
-		changesPending |= this._checkChannelsChanged();
-
-		var disableSubmit = !changesPending || this._anyInvalid(this.state.device) || this._anyInvalid(this.state.channels);
+		var disable = !changesPending || this._anyInvalid(this.state.device) || this._anyInvalid(this.state.channels);
 
 		return (
 			<div className="calibrate">
@@ -203,12 +174,47 @@ var CmeCalibrate = React.createClass({
 					<div className="section-content">
 						<div className="buttons">
 							<button className='btn' onClick={this._reset}>Reset</button>
-							<button className='btn' disabled={disableSubmit} onClick={this._submit}>Submit</button>
+							<button className='btn' disabled={disable} onClick={this._save}>Save</button>
+							<button className='btn' onClick={this._restart}>Restart</button>
 						</div>
 					</div>
 				</div>
 			</div>
 		);
+	},
+
+	_getDeviceConfig: function() {
+		var _this = this;
+		CmeAPI.device()
+			.done(function(d) {
+				_this._cache.device = d['device'];
+				_this.setState({ device: _this._validateDevice(d['device']) });
+			})
+			.fail(error);
+	},
+
+	_getChannelConfig: function() {
+		var _this = this;
+		// Send a request to populate the data array for the identified channel.
+		// We're not using the Action & Store to monitor channel data, however, as it
+		// will continue to update on the parent page.  Here we'll just use the
+		// CmeAPI call directly, and process the return.
+		CmeAPI.channels()
+			.done(function(chs) {
+				chs['channels'].forEach(function(ch) {
+					CmeAPI.channelConfig(ch)
+						.done(function(ch_cfg){
+							ch_cfg['id'] = ch;
+							_this._cache.channels.push(ch_cfg);
+							_this._cache.channels.sort(function(a, b) {
+								return parseInt(a.id.slice(2)) - parseInt(b.id.slice(2));
+							});
+							_this.setState({ channels: _this._validateChannels(_this._cache.channels) });
+						})
+						.fail(error);
+				});
+			})
+			.fail(error);
 	},
 
 	_renderChannelTab: function(ch, index) {
@@ -309,6 +315,7 @@ var CmeCalibrate = React.createClass({
 	},
 
 	_checkDeviceChanged: function() {
+
 		return JSON.stringify(this._cache.device) != JSON.stringify(this.state.device);
 	},
 
@@ -371,10 +378,38 @@ var CmeCalibrate = React.createClass({
 		});
 	},
 
-	_submit: function() {
+	_save: function() {
+		var _this = this;
+		
+		this.state.channels.forEach(function(ch) {
+			var s_cfgs = {};
+			ch.sensors.forEach(function(s) {
+				var _cfg = {}
+				for (var s_key in s) {
+					// copy all props except 'id'
+					if (s_key != 'id') {
+						_cfg[s_key] = s[s_key];
+					}
+				}
+				s_cfgs[s.id] = _cfg
+			});
+			CmeAPI.channelConfig(ch.id, s_cfgs)
+				.done(function(ch_cfg){
+					ch_cfg['id'] = ch;
+					_this._cache.channels.push(ch_cfg);
+					_this._cache.channels.sort(function(a, b) {
+						return parseInt(a.id.slice(2)) - parseInt(b.id.slice(2));
+					});
+					_this.setState({ channels: _this._validateChannels(_this._cache.channels) });
+				})
+				.fail(error);
+		});
+	},
 
-		if (confirm('Are you sure?\n\nAfter the device and channel information is written, the CME will be rebooted.\n')) {
-			alert('Sorry, this feature not yet implemented!');
+	_restart: function() {
+
+		if (confirm('Are you sure?\n\nThe CME will be rebooted.\n')) {
+			CmeAPI.restart(); // simple reboot
 		}
 	},
 
