@@ -14,7 +14,7 @@ var classNames = require('classnames');
 var moment = require('moment');
 require('moment-duration-format');
 
-var flot = require('../Flot/jquery.flot');
+var flot = require('../flot/jquery.flot');
 
 var	PLOT_COLORS = {
 	'VA': '#ff0000',

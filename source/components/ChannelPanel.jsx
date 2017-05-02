@@ -18,8 +18,8 @@ var ThresholdConfig = require('./ThresholdConfig');
 var moment = require('moment');
 var classNames = require('classnames');
 
-var flot = require('../Flot/jquery.flot');
-flot.time = require('../Flot/jquery.flot.time');
+var flot = require('../flot/jquery.flot');
+flot.time = require('../flot/jquery.flot.time');
 
 var ENTER_KEY_CODE = 13;
 var ESCAPE_KEY_CODE = 27;
