@@ -1,8 +1,8 @@
 # Builds a volume container based on the cme-base docker image (Alpine, Python, Rrdtool).
 # This docker implements the Cme device web application layer.
 
-# Start with cme-base docker image
-FROM cme-base
+# Start with bare-bones Alpine
+FROM hypriot/rpi-alpine-scratch
 
 MAINTAINER James Brunner <james.brunner@smithsmicrowave.com>
 
