@@ -6,12 +6,7 @@ FROM hypriot/rpi-alpine-scratch
 
 MAINTAINER James Brunner <james.brunner@smithsmicrowave.com>
 
-# Create the web root folder, /www, and pull the indicated Cme-web release.
-RUN mkdir /www && \
-	curl -sS https://s3.amazonaws.com/transtectorpublicdownloads/Cme/1500-007-v1.0.0-SWARE-CME_WEB.tgz | \
-	tar -xzC /www
-
-# Make the web root folder a volume (Cme-api docker will get run w/--volumes-from this docker).
+ADD https://s3.amazonaws.com/transtectorpublicdownloads/Cme/1500-007-v1.0.0-SWARE-CME_WEB.tgz /www
 VOLUME /www
 
 # just a volume container - don't run anything
