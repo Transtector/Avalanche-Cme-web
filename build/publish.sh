@@ -10,11 +10,13 @@ APP=${SRC##*/}
 CME_WEB_PN=1500-007
 
 # Increment VERSION build number; the '123' in 1.0.0-123
-#VERSION=`perl -nle 'print $& if m{("version"\s*:\s*")\K([^"])*}' package.json`
-#IFS='-' read -ra PARTS <<< "${VERSION}"
-#BUILD_NUMBER=${PARTS[1]}
-#((BUILD_NUMBER++))
-#$(echo "${PARTS[0]}-${BUILD_NUMBER}" > ${SRC}/VERSION)
+VERSION=`perl -nle 'print $& if m{("version"\s*:\s*")\K([^"])*}' package.json`
+IFS='-' read -ra PARTS <<< "${VERSION}"
+BUILD_NUMBER=${PARTS[1]}
+((BUILD_NUMBER++))
+
+# Set the new version (don't tag/commit)
+npm --no-git-tag-version version "${PARTS[0]}-${BUILD_NUMBER}"
 
 # read the version from package.json
 VERSION=`perl -nle 'print $& if m{("version"\s*:\s*")\K([^"])*}' package.json`
