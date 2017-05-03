@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# Run this script to build the Cme-web (Cme web application
-# layer) distribution tarball that can be downloaded to a CME device
-# and installed.
+# Build the web application files
+npm run build
 
 CME_WEB_PN=1500-007
 
@@ -15,20 +14,8 @@ VERSION=`perl -nle 'print $& if m{("version"\s*:\s*")\K([^"])*}' package.json`
 PACKAGE=${CME_WEB_PN}-v${VERSION}-SWARE-CME_WEB.tgz
 
 echo
-echo "  Building Cme-web package: "${PACKAGE}
+echo "  Building Cme-web package: ${PACKAGE}"
 echo
-
-if [ ! -f ${SRC}/bundle.js ]; then
-	echo "  ERROR: No built Javascript (bundle.js)!  Make sure to build the application first..."
-	echo
-	exit 1
-fi
-
-if [ ! -f ${SRC}/style.css ]; then
-	echo  "  ERROR: No built CSS styles (style.css)!  Make sure to build the application first..."
-	echo
-	exit 1
-fi
 
 # Copy files over to dist/
 mkdir -p ${DIST}
@@ -47,4 +34,3 @@ popd
 rm -rf ${DIST}
 
 echo "  Done!"
-echo

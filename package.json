@@ -1,6 +1,6 @@
 {
   "name": "cme",
-  "version": "1.0.0",
+  "version": "1.0.0-1",
   "description": "Core Monitoring Engine web application",
   "main": "index.html",
   "scripts": {
