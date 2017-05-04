@@ -35,7 +35,9 @@ var AlarmPlot = React.createClass({
 			plotOptions: {
 				yaxes: [ {}, { 
 					alignTicksWithAxis: 1,
-					position: 'right'
+					position: 'right',
+					min: 0,
+					max: 10
 				}],
 				grid: {
 					margin: 2,

@@ -356,8 +356,8 @@ var AlarmsPanel = React.createClass({
 				CmeAPI.sensorHistory(channel.id, sensor.id, history)
 					.done(function(data) {
 
-						var MIN = data && data[3] && data[3].filter(isNumeric),
-							MAX = data && data[4] && data[4].filter(isNumeric);
+						var MIN = data && data[3] && data[3].filter(isNumeric) || [],
+							MAX = data && data[4] && data[4].filter(isNumeric) || [];
 
 						var act_low = (MIN.length > 0) 
 								? Math.min.apply(null, MIN)
@@ -505,17 +505,36 @@ var AlarmsPanel = React.createClass({
 				avg_duration: 0
 			}
 
+			var start = this.state.week
+
+				// If we're NOT in the current week (this.state.week == 0) then
+				// we'll set start to the days difference between now and
+				// this.state.week X Sundays ago.  Note this.state.week is a
+				// negative number for weeks ago (-1 is last week, -2 the week
+				// before, etc).
+				? moment().add(this.state.week, 'weeks').startOf('week')
+
+				// Else, we'll just go back to start of the week
+				: moment().startOf('week');
+
+			var end = this.state.week
+				? moment(start).add(7, 'days') // start + 7 days
+				: moment.invalid(); // else end now (set invalid moment object)
+
+			// Add new alarm summary item then fire the request
+			// to update.  That way table renders w/new values
+			// and re-renders when request is responded.
 			_as.push(alarmSummaryItem);
 
-			console.log("Requesting alarms for ALARM GROUP " + i);
+			//console.log("Requesting alarms for ALARM GROUP " + i);
 
-			CmeAPI.alarms({c: ag.channels.join(','), s: null, e: null})
+			CmeAPI.alarms({c: ag.channels.join(','), s: start(), e: end.isValid() ? end() : null })
 				.done(function(group_alarms) {
 
 					var duration = 0,
 						alarms_with_end = 0;
 
-					console.log('GROUP[' + i + '] received '+ group_alarms.length + ' alarms.');
+					//console.log('GROUP[' + i + '] received '+ group_alarms.length + ' alarms.');
 
 					group_alarms.forEach(function(a) {
 
