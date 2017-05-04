@@ -505,7 +505,7 @@ var AlarmsPanel = React.createClass({
 				avg_duration: 0
 			}
 
-			var start = this.state.week
+			var start_ms = this.state.week
 
 				// If we're NOT in the current week (this.state.week == 0) then
 				// we'll set start to the days difference between now and
@@ -514,11 +514,11 @@ var AlarmsPanel = React.createClass({
 				// before, etc).
 				? moment().add(this.state.week, 'weeks').startOf('week')
 
-				// Else, we'll just go back to start of the week
+				// Current week - just go back to start of the week
 				: moment().startOf('week');
 
-			var end = this.state.week
-				? moment(start).add(7, 'days') // start + 7 days
+			var end_ms = this.state.week
+				? moment(start_ms).add(7, 'days') // start + 7 days
 				: moment.invalid(); // else end now (set invalid moment object)
 
 			// Add new alarm summary item then fire the request
@@ -528,7 +528,7 @@ var AlarmsPanel = React.createClass({
 
 			//console.log("Requesting alarms for ALARM GROUP " + i);
 
-			CmeAPI.alarms({c: ag.channels.join(','), s: start(), e: end.isValid() ? end() : null })
+			CmeAPI.alarms({c: ag.channels.join(','), s: start_ms.valueOf(), e: end_ms.isValid() ? end_ms.valueOf() : null })
 				.done(function(group_alarms) {
 
 					var duration = 0,
