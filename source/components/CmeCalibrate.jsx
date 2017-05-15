@@ -408,7 +408,7 @@ var CmeCalibrate = React.createClass({
 
 	_restart: function() {
 
-		if (confirm('Are you sure?\n\nThe CME will be rebooted.\n')) {
+		if (confirm('Are you sure?\n\nThe device will be rebooted.\n')) {
 			CmeAPI.restart(); // simple reboot
 		}
 	},
