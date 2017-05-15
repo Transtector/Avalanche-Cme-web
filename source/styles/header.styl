@@ -40,7 +40,7 @@ header // 100px height, vertically center logo w/24px padding
 	.tab
 		position absolute
 		top -3px
-		left 236px
+		left 280px // shift tab edge left-right w/this
 		width 1024px // keeps the slope from changing on window width changes
 		bottom 0
 		border 0 solid header-tab-border-color
@@ -182,3 +182,6 @@ header // 100px height, vertically center logo w/24px padding
 	.panel-header
 		display none
 
+@media only print
+	header
+		display none
