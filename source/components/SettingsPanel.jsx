@@ -104,10 +104,10 @@ var SettingsPanel = React.createClass({
 
 					<InputGroup title="Legal" id='legal'>
 						<div>
-							<p>The software components comprising the CME system are copyright &copy; 2017 
+							<p>The software components comprising the TracVision&trade; system are copyright &copy; 2017 
 							Transtector Systems, Inc.</p>
 
-							<p>Several unmodified software packages and libraries are used in the CME system.</p>
+							<p>Several unmodified software packages and libraries are used in the TracVision&trade; system.</p>
 
 							<ul>
 								<li><a href='https://www.debian.org/legal/licenses/'>Debian GNU/Linux</a> and component packages are released under terms of the common <a href='/legal/debian-linux/LICENSE.txt'>GNU General Public License</a>.</li>
