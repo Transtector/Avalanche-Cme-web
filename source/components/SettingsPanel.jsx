@@ -51,8 +51,6 @@ var SettingsPanel = React.createClass({
 		if (Object.keys(this.state.config).length <= 0)
 			return null;
 
-		console.log("ConfigPanel rendering...");
-
 		var config = this.state.config;
 
 		return (
