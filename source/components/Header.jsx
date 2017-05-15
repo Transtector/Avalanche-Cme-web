@@ -66,12 +66,14 @@ var Header = React.createClass({
 
 	render: function () {
 
-		var model = '', 
+		var product = 'TracVision',
+			model = '', 
 			serial = '',
 			firmware = '',
 			standAlone = true;
 
 		if (this.state.device && this.state.device.cme) {
+			product = this.state.device.cme.productName;
 			model = this.state.device.cme.modelNumber;
 			serial = this.state.device.cme.serialNumber;
 			firmware = this.state.device.cme.firmware;
@@ -90,18 +92,12 @@ var Header = React.createClass({
 
 		var recoveryCls = classNames('recovery', { 'hidden': !this.state.device.recovery });
 
-		var brandName = 'CME';
-		if (this.state.config && this.state.config.general)
-			brandName = this.state.config.general.name;
-
 		return (
 			<header>
 				<div className="tab">&nbsp;</div>
 
 				<div className="branding">
-					<div className="title">
-						{brandName}<span title='This is a stand-alone CME (no host)' className={standAlone ? 'stand-alone' : 'hidden'}>*</span>
-					</div>
+					<div className="title">{product}&trade;</div>
 					<div className="model">{model}</div>
 				</div>
 

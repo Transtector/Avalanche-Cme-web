@@ -271,7 +271,7 @@ var CmeExport = React.createClass({
 
 				<div className={(this.state.instructionsVisible ? '' : 'hidden') + ' instructions'}>
 					<h3>Instructions</h3>
-					<p>This page can be used to export CME channel data for use in a variety
+					<p>This page can be used to export TracVision(tm) channel data for use in a variety
 						of applications, for example Microsoft Excel.</p>
 
 					<h4>Copy/Paste Method</h4>
