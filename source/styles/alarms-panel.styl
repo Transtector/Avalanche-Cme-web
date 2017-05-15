@@ -2,9 +2,9 @@
 .panel#alarms
 	.panel-content
 		position relative
-		width 8in
+		width 768px
 		margin 30px auto
-		padding 0.25in 0.5in 1.5in 0.5in
+		padding 20px 40px 130px 40px
 		background-color white
 		box-shadow 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 0, 0, 0.1) inset
 		&:before, &:after
@@ -21,44 +21,75 @@
 			right 10px
 			left auto
 			transform skew(8deg) rotate(3deg)
-		h2:first-child, h3
-			text-align center
-		h2:not(:first-child)
-			margin 2.4em 0 0.4em 0
-		h3.date-range
-			font-style italic
-			span
-				margin 0 1em
-				font-style normal
-				//text-decoration underline
-		.content-header h2 button
+			
+	.print-header
+		display none
+		td
+			border none
+			text-align left
+		.logo
 			position relative
-			margin-left 1em
-			padding 0 30px
-			font inherit
-			color fg-color
-			border 0 solid transparent
-			border-bottom-width 1px
-			background-color transparent
-			outline none
-			&:not(:disabled)
-				border-color lighten(button-bg-color, 50%)
-			&:not(:disabled)::after
-				position absolute
-				content ""
-				right 0
-				bottom 0
-				border 6px solid transparent
-				border-right-color lighten(button-bg-color, 50%)
-				border-bottom-color lighten(button-bg-color, 50%)
-			&:not(:disabled):hover
-				cursor pointer
-				border-color button-bg-color
-				&::after
-					border-right-color button-bg-color
-					border-bottom-color button-bg-color
+			width 48px
+			padding 0 12px 6px 0
+			background-image svg('logo', '0 0 128 128', button-bg-color)
+			background-repeat no-repeat
+			background-size 48px 48px
+		.bigger
+			font-size 12pt
+			font-weight bold
+		.smaller
+			font-size 80%
+		.right
+			text-align right
+		.border
+			border-bottom 3px solid button-bg-color
+	
+	.content-header 
+		h2
+			text-align center
+			button
+				position relative
+				margin-left 1em
+				padding 0 30px
+				font inherit
+				color fg-color
+				border 0 solid transparent
+				border-bottom-width 1px
+				background-color transparent
+				outline none
+				&:not(:disabled)
+					border-color lighten(button-bg-color, 50%)
+				&:not(:disabled)::after
+					position absolute
+					content ""
+					right 0
+					bottom 0
+					border 6px solid transparent
+					border-right-color lighten(button-bg-color, 50%)
+					border-bottom-color lighten(button-bg-color, 50%)
+				&:not(:disabled):hover
+					cursor pointer
+					border-color button-bg-color
+					&::after
+						border-right-color button-bg-color
+						border-bottom-color button-bg-color
 
-	.panel-content > table
+	.content-footer
+		position absolute
+		left 0.5in
+		bottom 0
+		right 0.5in
+		padding 8px 12px 0.25in 12px
+		border 0px solid button-bg-color
+		border-top-width 3px
+		div:first-child
+			margin-bottom 0.25em
+			font-size 12pt
+			font-weight bold
+		div:last-child
+			font-size 10pt
+
+	table
 		width 100%
 		border-collapse collapse
 		th, td
@@ -72,9 +103,24 @@
 			text-align center
 		tbody th
 			padding 0.4em 20px
-		.centered
-			text-align center
-		
+
+	h3
+		text-align center
+
+	h3.date-range
+		font-style italic
+		span
+			margin 0 1em
+			font-style normal
+			//text-decoration underline
+
+	h2.alarm-detail
+		border-top 3px solid #eee
+		padding-top 1.6em
+
+	h2:not(:first-child)
+		margin 2.4em 0 0.4em 0
+
 	table.site-info th
 		width 40%
 		
@@ -141,40 +187,26 @@
 				overflow hidden
 			.plot-wrapper
 				position absolute
-				left 40px
-				top 30px
-				right 40px
-				bottom 30px
-				transition left 0.3s ease 0s
+				left 0
+				right 0
+				top 0
+				bottom 0
+				margin 30px 40px
+				transition left 0.3s ease, right 0.3s ease
 			.plot-wrapper.start
 				left -100%
+				right 100%
 			.plot-wrapper.end
 				left 100%
-			.plot-wrapper.start.active,
-			.plot-wrapper.end.active
-				left 40px
+				right -100%
+			.plot-wrapper.active
+				left 0
+				right 0
 			.plot
-				width 686px // hack: should be width 100%, but flot plots too soon...
+				width 100%
 				height 100%
-				.flot-x-axis .flot-tick-label:first-child
-					&::before, &::after
-						content ''
-						position absolute
-						right 2px
-						bottom -10px
-						width 2px
-						height 10px
-						background-color #aaa
-					&::after
-						width 0
-						height 0
-						left -2px
-						bottom -2px
-						background-color transparent
-						border 5px solid transparent
-						border-bottom-color #aaa
 			.plot-wrapper.single-axis .plot
-				width 660px
+				width 100%
 				.flot-text::before
 					right 7px
 				.flot-text::after
@@ -208,10 +240,18 @@
 				width 90%
 				margin 0 auto
 				border 1px solid #ddd
-				td
+				button
 					position relative
+					width 120px
+					height 24px
+					color #ddd
 					border 0
-				td::before
+					background-color transparent
+					outline 0
+					cursor pointer
+				button.active
+					color fg-color
+				button::before
 					content ''
 					position absolute
 					width 10px
@@ -219,20 +259,23 @@
 					top 50%
 					margin-top -6px
 					margin-left -15px
-					border 1px solid #ddd
-				.ph-A, .ph-B, .ph-C
+					border 1px solid #ccc
+					opacity 0.4
+				.tr_0, .tr_1, .tr_2
 					padding-left 20px
 					text-align left
-				.ph-A::before
-					background-color #ff0000
-				.ph-B::before
-					background-color #00ff00
-				.ph-C::before
-					background-color #0000ff
-				.pib
+				.tr_3
 					text-align right
-				.pib::before
-					background-color #ffd42a
+				.tr_0::before
+					background-color #ff0000
+				.tr_1::before
+					background-color #00ff00
+				.tr_2::before
+					background-color #0000ff
+				.tr_3::before
+					background-color #ffeb24
+				button.active::before
+					opacity 1
 			.carousel-handle
 				position absolute
 				left 40px
@@ -250,26 +293,73 @@
 					outline 0
 				button.active
 					background-color black
-					
-				
-	h2.alarm-detail
-		border-top 3px solid #eee
-		padding-top 1.6em
-				
-
-	.copyright
-		position absolute
-		left 0.5in
-		bottom 0
-		right 0.5in
-		padding 8px 12px 0.25in 12px
-		border 0px solid button-bg-color
-		border-top-width 3px
-		div:first-child
-			margin-bottom 0.25em
-			font-size 12pt
-			font-weight bold
-		div:last-child
-			font-size 10pt
 			
+			ALERT_DURATION = 0.5s
+			ALERT_DELAY = 1.5s
+			
+			.alert
+				position absolute
+				top 70%
+				left 50%
+				padding 10px
+				border-radius 6px
+				transform translateX(-50%) translateY(-50%)
+				color #000
+				background-color rgba(127,127,127,.4)
+				font-size 22pt
+				opacity 0
+				transition padding, font-size, left, top
+				transition-delay ALERT_DELAY
+				transition-duration ALERT_DURATION
+			.alert::after
+				content ''
+				display block
+				position absolute
+				border 16px solid transparent
+				width 0
+				height 0
+				border-top-color rgba(127,127,127,.4)
+				left 50%
+				margin-left -16px
+				top 100%
+				transition border-width ALERT_DURATION ALERT_DELAY
+			.alert.show
+				opacity 1
+			.alert.showAndFade
+				opacity 1
+				top 105%
+				left 85%
+				font-size 0
+				padding 0
+			.alert.showAndFade::after
+				border-width 0	
+			.centered
+				text-align center
+			
+
 @import week-chooser-panel
+
+@media print
+	.panel#alarms
+		width 100%
+		margin 0
+		padding 0
+		.panel-content
+			background-color transparent
+			width 100%
+			margin 0
+			padding 0
+		.print-header
+			display table
+		.content-header
+			margin-top 0
+			h2
+				page-break-after avoid
+			h2 button
+				border-bottom 1px solid fg-color
+				&::after
+					display none
+		.content-footer
+			position static
+		table.alarm-detail
+			page-break-inside avoid

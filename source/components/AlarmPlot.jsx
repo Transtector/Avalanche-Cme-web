@@ -15,6 +15,7 @@ var moment = require('moment');
 require('moment-duration-format');
 
 var flot = require('../flot/jquery.flot');
+require('../flot/jquery.flot.resize');
 
 var	PLOT_COLORS = {
 	'VA': '#ff0000',
@@ -27,10 +28,44 @@ var	PLOT_COLORS = {
 
 var AlarmPlot = React.createClass({
 
+	propTypes: {
+		id: React.PropTypes.string.isRequired,
+		alarm: React.PropTypes.object.isRequired,
+		tab: React.PropTypes.number.isRequired,
+		zone: React.PropTypes.number.isRequired,
+		onZoneChange: React.PropTypes.func.isRequired
+	},
+
 	getInitialState: function() {
+		var _this = this,
+			id = this.props.id;
+
+		function beforePrint() {
+			_this._updatePlot(true);
+		}
+
+		function afterPrint() {
+			_this._updatePlot(true);
+		}
+
+		if (window.matchMedia) {
+			var mediaQueryList = window.matchMedia('print');
+			mediaQueryList.addListener(function (mql) {
+				(mql.matches) ? beforePrint() : afterPrint();
+			});
+		} else {
+			// basically a fallback for < IE11
+			window.addEventListener('beforeprint', beforePrint, false);
+			window.addEventListener('afterprint', afterPrint, false);
+		}
 
 		return {
-			plots: {}, // holds refs to plots for updates
+
+			tabTraces: { // for each tab, active trace indices
+				0: [ 0, 1, 2, 3 ], // Source/Utility; Vab, Vbc, Vca, PI
+				1: [ 0, 1, 2, 3 ], // Power Cond; Va, Vb, Vc, PI
+				2: [ 0, 1, 2 ] // Power Cond; Ia, Ib, Ic
+			},
 
 			plotOptions: {
 				yaxes: [ {}, { 
@@ -50,24 +85,32 @@ var AlarmPlot = React.createClass({
 
 	render: function() {
 
-		var plotWrapperClass_start = classNames('plot-wrapper start', { 'active': this.props.zone == 0, 'single-axis': this.props.tab == 2 }),
-			plotWrapperClass_end = classNames('plot-wrapper end', { 'active': this.props.zone == 1, 'single-axis': this.props.tab == 2 }),
-			carousel_start = classNames({ 'active': this.props.zone == 0 }),
-			carousel_end = classNames({ 'active': this.props.zone == 1 });
+		var plotWrapperClass_start = classNames('plot-wrapper start', { 'active': !this.props.zone, 'single-axis': this.props.tab == 2 }),
+			plotWrapperClass_end = classNames('plot-wrapper end', { 'active': !!this.props.zone, 'single-axis': this.props.tab == 2 }),
+			carousel_start = classNames({ 'active': !this.props.zone }),
+			carousel_end = classNames({ 'active': !!this.props.zone });
+
+		// Set some DOM element Id's based on the parent Alarm Detail Table id (passed in on a prop)
+		var plotStart_id = this.props.id + '_0',
+			plotEnd_id = this.props.id + '_1',
+			plotStartAlert_id = this.props.id + '_alert_0',
+			plotEndAlert_id = this.props.id + '_alert_1';
 
 		return (
-			<div className='plot-tab-content'>
+			<div id={this.props.id} className='plot-tab-content'>
 
 				{
-					this._renderLegend(this.props.tab)
+					this._renderLegend()
 				}
 
 				<div className={plotWrapperClass_start}>
-					<div className='plot start' id='plotZone_0' ref={this._createPlot}></div>
+					<div className='plot start' id={plotStart_id} ref={this._attachPlot}></div>
+					<div className='alert screen' id={plotStartAlert_id} ref={this._attachAlert}>START</div>
 				</div>
 
 				<div className={plotWrapperClass_end}>
-					<div className='plot end' id='plotZone_1' ref={this._createPlot}></div>
+					<div className='plot end' id={plotEnd_id} ref={this._attachPlot}></div>
+					<div className='alert screen' id={plotEndAlert_id} ref={this._attachAlert}>END</div>
 				</div>
 
 				<div className='carousel-handle'>
@@ -76,7 +119,7 @@ var AlarmPlot = React.createClass({
 				</div>
 
 				{ 
-					$.isEmptyObject(this.state.plots) && <div className='loaderWrapper'><div className='loader'>Loading...</div></div>
+					!this[plotStart_id] || !this[plotEnd_id] && <div className='loaderWrapper'><div className='loader'>Loading...</div></div>
 				}
 
 				<div className='x-axis-label'>Time To Alarm (ms) 
@@ -111,49 +154,82 @@ var AlarmPlot = React.createClass({
 
 	componentDidUpdate: function(prevProps, prevState) {
 
-		this._updatePlot(this.props.zone);
+		// pop the start/end alerts if the zone has changed
+		if (prevProps.zone !== this.props.zone) {
+			this._showAlert();
+		}
+		this._updatePlot();
 	},
 
-	_renderLegend: function(tab) {
-		var traceA, traceB, traceC, traceD;
+	_renderLegend: function() {
+		var tab = this.props.tab,
+			trace0, trace1, trace2, trace3,
+			cls0 = classNames('tr_0', { active: this._isActiveTrace(0) }),
+			cls1 = classNames('tr_1', { active: this._isActiveTrace(1) }),
+			cls2 = classNames('tr_2', { active: this._isActiveTrace(2) }),
+			cls3 = classNames('tr_3', { active: this._isActiveTrace(3) });
+
 
 		switch (tab) {
 
 			case 1: // Power Conditioner Voltages - WYE connected
-				traceA = 'Va';
-				traceB = 'Vb';
-				traceC = 'Vc';
-				traceD = 'Phs. Imb.';
+				trace0 = 'Va';
+				trace1 = 'Vb';
+				trace2 = 'Vc';
+				trace3 = 'Phs. Imb.';
 				break;
 
 			case 2: // Power Conditioner Currents (no Phase Imbalance)
-				traceA = 'Ia';
-				traceB = 'Ib';
-				traceC = 'Ic';
+				trace0 = 'Ia';
+				trace1 = 'Ib';
+				trace2 = 'Ic';
 				break;
 
 			default: // Source/Utility Voltages - DELTA connected
-				traceA = 'Vab';
-				traceB = 'Vbc';
-				traceC = 'Vca';
-				traceD = 'Phs. Imb.';
+				trace0 = 'Vab';
+				trace1 = 'Vbc';
+				trace2 = 'Vca';
+				trace3 = 'Phs. Imb.';
 		}
 
 		return (
 			<table className='legend'><tbody>
 				<tr>
-					<td className='ph-A'>{traceA}</td>
-					<td className='ph-B'>{traceB}</td>
-					<td className='ph-C'>{traceC}</td>
-					{ traceD ? <td className='pib'>{traceD}</td> : null }
+					<td><button id='tr_0' className={cls0} onClick={this._toggleTrace}>{trace0}</button></td>
+					<td><button id='tr_1' className={cls1} onClick={this._toggleTrace}>{trace1}</button></td>
+					<td><button id='tr_2' className={cls2} onClick={this._toggleTrace}>{trace2}</button></td>
+					{ 
+						trace3 
+						? <td><button id='tr_3' className={cls3} onClick={this._toggleTrace}>{trace3}</button></td> 
+						: null
+					}
 				</tr>
 			</tbody></table>
 		);
 	},
 
-	_dataSeries: function(zone) {
+	_toggleTrace: function(e) {
+		var i = parseInt(e.target.id.split('_')[1]),
+			tab = this.props.tab,
+			tt = Object.assign({}, this.state.tabTraces);
+
+			if (this._isActiveTrace(i))
+				tt[tab].splice(tt[tab].indexOf(i), 1);
+			else
+				tt[tab].push(i);
+
+		this.setState({ tabTraces: tt });
+	},
+
+	_isActiveTrace: function(i) {
+
+		return this.state.tabTraces[this.props.tab].indexOf(i) > -1;
+	},
+
+	_dataSeries: function() {
 		// 'zone' is the start (0) or end (1) of the alarm data
-		var series = [],
+		var zone = this.props.zone,
+			series = [],
 			traces = [ [], [], [], [] ],
 
 			a = this.props.alarm,
@@ -174,29 +250,31 @@ var AlarmPlot = React.createClass({
 		for (var i = 0; i < index_end; i++) {
 
 			var t = (start_time + step * i),
-				index = (a.end_ms && zone) ? i + N/2 : i;
+				index = (a.end_ms && zone) ? i + N/2 : i,
+				tabTraces = this.state.tabTraces,
+				tab = this.props.tab;
 
 			// put phase imbalance trace first, so it renders under the phase traces
-			switch (this.props.tab) {
+			switch (tab) {
 
-				case 1: // Load Voltages & PI
-					traces[0].push([ t, a.data['ch7']['s0'][index] ]); // phase imbalance
-					traces[1].push([ t, a.data['ch4']['s0'][index] ]); // phase A
-					traces[2].push([ t, a.data['ch5']['s0'][index] ]); // phase B
-					traces[3].push([ t, a.data['ch6']['s0'][index] ]); // phase C
+				case 1: // Power Conditioner Volts & PI
+					if (this._isActiveTrace(3)) traces[0].push([ t, a.data['ch7']['s0'][index] ]); // phase imbalance
+					if (this._isActiveTrace(0)) traces[1].push([ t, a.data['ch4']['s0'][index] ]); // phase A
+					if (this._isActiveTrace(1)) traces[2].push([ t, a.data['ch5']['s0'][index] ]); // phase B
+					if (this._isActiveTrace(2)) traces[3].push([ t, a.data['ch6']['s0'][index] ]); // phase C
 					break;
 
 				case 2: // Load Currents (no PI)
-					traces[0].push([ t, a.data['ch4']['s1'][index] ]); // phase A
-					traces[1].push([ t, a.data['ch5']['s1'][index] ]); // phase B
-					traces[2].push([ t, a.data['ch6']['s1'][index] ]); // phase C
+					if (this._isActiveTrace(0)) traces[0].push([ t, a.data['ch4']['s1'][index] ]); // phase A
+					if (this._isActiveTrace(1)) traces[1].push([ t, a.data['ch5']['s1'][index] ]); // phase B
+					if (this._isActiveTrace(2)) traces[2].push([ t, a.data['ch6']['s1'][index] ]); // phase C
 					break;
 
-				default: // Source Voltages & PI
-					traces[0].push([ t, a.data['ch3']['s0'][index] ]); // phase imbalance
-					traces[1].push([ t, a.data['ch0']['s0'][index] ]); // phase A
-					traces[2].push([ t, a.data['ch1']['s0'][index] ]); // phase B
-					traces[3].push([ t, a.data['ch2']['s0'][index] ]); // phase C
+				default: // Case 0:  Source Voltages & PI
+					if (this._isActiveTrace(3)) traces[0].push([ t, a.data['ch3']['s0'][index] ]); // phase imbalance
+					if (this._isActiveTrace(0)) traces[1].push([ t, a.data['ch0']['s0'][index] ]); // phase A
+					if (this._isActiveTrace(1)) traces[2].push([ t, a.data['ch1']['s0'][index] ]); // phase B
+					if (this._isActiveTrace(2)) traces[3].push([ t, a.data['ch2']['s0'][index] ]); // phase C
 			}
 		}
 
@@ -215,29 +293,64 @@ var AlarmPlot = React.createClass({
 		return series;
 	},
 
-	_updatePlot: function(zone) {
+	_attachPlot: function(el) {
 
-		if (!this.state.plots[zone]) return;
+		if (el && !this[el.id]) {
 
-		this.state.plots[zone].setData(this._dataSeries(zone));
-		this.state.plots[zone].setupGrid();
-		this.state.plots[zone].draw();
+			this[el.id] = el;
+			el.plot = $.plot($(el), this._dataSeries(), this.state.plotOptions);
+			//console.log("Created Plot " + el.id + " [ " + $(el).width() + " x " + $(el).height() + " ]");
+		}
 	},
 
-	_createPlot: function(el) {
+	_updatePlot: function(resize) {
 
-		if (!this.props.alarm || !this.props.alarm.data || !el) return;
+		var zone = this.props.zone,
+			plotId = this.props.id + '_' + zone,
+			plot = this[plotId].plot;
 
-		var plotZone = parseInt(el.id.split('_')[1]),
+		//console.log("Updating Plot " + plotId);
 
-			plot = $.plot($(el), this._dataSeries(plotZone), this.state.plotOptions);
+		if (resize) {
+			plot.resize();
+		}
 
-		this.setState(function(prevState) {
-			var plots = Object.assign({}, prevState.plots);
-			plots[plotZone] = plot;
-			return { plots: plots }
-		});
-	}
+		plot.setData(this._dataSeries());
+		plot.setupGrid();
+		plot.draw();
+
+		// got to remove active from the non-current-zone plot wrapper
+		//var zoneOff = this.props.id + '_' + (zone == 0 ? '1' : '0');
+		//$('#' + zoneOff).parent().removeClass('active');
+	},
+
+	_attachAlert: function(el) {
+		if (el && !this[el.id]) {
+			this[el.id] = el;
+
+			var zone_id = el.id.split('_');
+
+			zone_id = parseInt(zone_id[zone_id.length - 1]);
+
+			if (zone_id == this.props.zone) {
+				$(el).addClass('show');
+				setTimeout(function() { $(el).removeClass('show'); }, 10000);
+			}
+		}
+	},
+
+	_showAlert: function() {
+
+		var id = this.props.id + '_alert_' + this.props.zone;
+
+		if (this[id]) {
+
+			var $el = $(this[id])
+			$el.removeClass('show').addClass('showAndFade');
+			setTimeout(function(){ $el.removeClass('showAndFade') }, 2000);
+		}
+	},
+
 });
 
 module.exports = AlarmPlot;

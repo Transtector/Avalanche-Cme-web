@@ -19,6 +19,7 @@ var AlarmPlot = require('./AlarmPlot');
 var AlarmDetailTable = React.createClass({
 
 	propTypes: {
+		id: React.PropTypes.string.isRequired,
 		alarm: React.PropTypes.object.isRequired,
 		trigger: React.PropTypes.object.isRequired
 	},
@@ -42,7 +43,7 @@ var AlarmDetailTable = React.createClass({
 			tabClass_2 = classNames({ active: this.state.tab == 2 });
 
 		return (
-			<table className='alarm-detail'>
+			<table id={this.props.id} className='alarm-detail'>
 				<tbody>
 					<tr>
 						<th className='alarm-group' colSpan='4'>{alarm.group}</th>
@@ -83,7 +84,7 @@ var AlarmDetailTable = React.createClass({
 									0: event start,
 									1: event end
 							*/}
-							<AlarmPlot alarm={alarm} tab={this.state.tab} zone={this.state.zone} onZoneChange={this._setPlotZone} />
+							<AlarmPlot id={this.props.id + '_plot'} alarm={alarm} tab={this.state.tab} zone={this.state.zone} onZoneChange={this._setPlotZone} />
 							
 						</td>
 					</tr>

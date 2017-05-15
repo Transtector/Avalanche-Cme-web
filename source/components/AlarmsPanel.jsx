@@ -143,6 +143,14 @@ var AlarmsPanel = React.createClass({
 
 		if (!Object.keys(this.state.config).length || !Object.keys(this.state.device).length) return null;
 
+		var model = '', 
+			serial = '';
+
+		if (this.state.device && this.state.device.host) {
+			model = this.state.device.host.modelNumber || model;
+			serial = this.state.device.host.serialNumber || serial;
+		}
+
 		var dateFormat = 'ddd, MMMM Do h:mm a',
 
 			startDate = this.state.week == this.state.weeks[0]
@@ -182,7 +190,7 @@ var AlarmsPanel = React.createClass({
 		return (
 			<div className="panel" id="alarms">
 
-				<div className="panel-header">
+				<div className="panel-header screen">
 					<div className="title">
 						Alarms
 					</div>
@@ -193,6 +201,21 @@ var AlarmsPanel = React.createClass({
 				</div>
 
 				<div className="panel-content">
+
+					<table className="print-header">
+						<tbody>
+							<tr>
+								<td rowSpan='3' className="logo"><div>&nbsp;</div></td>
+								<td className="bigger">{this.state.device.cme.productName}&trade;</td>
+								<td className="smaller right">v{this.state.device.cme.firmware}</td>
+							</tr>
+							<tr className="smaller">
+								<td className="border">{model}&nbsp;{serial}</td>
+								<td className="right border">{moment().format(dateFormat)}</td>
+							</tr>
+							<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+						</tbody>
+					</table>
 
 					<div className="content-header">
 						<h2>
@@ -258,13 +281,13 @@ var AlarmsPanel = React.createClass({
 					{
 						this.state.alarms.map(function(a, i) {
 							return (
-								<AlarmDetailTable key={'alarm_detail_' + i} alarm={a} trigger={this.state.channels[a.channel]} />
+								<AlarmDetailTable key={'ADT_' + i} id={'ADT_' + i} alarm={a} trigger={this.state.channels[a.channel]} />
 							);
 						}, this)
 					}
 
-					<div className='copyright'>
-						<div>Core Monitoring Engine</div>
+					<div className='content-footer'>
+						<div>{this.state.device.cme.productName}&trade;</div>
 						<div>Copyright &copy; Transtector, 2017</div>
 					</div>
 
