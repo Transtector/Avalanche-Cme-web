@@ -247,3 +247,23 @@ div#test-buttons
 @media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
 @import style-ie
 }
+
+
+// Setup printing styles
+.print
+	display none
+@media only print
+	html, body
+		width 100%
+		margin 0
+		padding 0
+		background-color white
+		
+	@page   
+		margin: 0.25in 0.5in
+
+	.screen
+		display none
+
+	.print
+		display block
