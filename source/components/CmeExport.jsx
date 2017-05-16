@@ -74,6 +74,10 @@ function formatPrettySeconds(seconds) {
 	return [days, hours, minutes].join(' ');
 }
 
+function round(value, decimals) {
+	return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+}
+
 function renderSensorHeader(ch, h, title, field) {
 
 	if (!ch || !ch.sensors || !ch.data)
@@ -141,7 +145,7 @@ function renderSensorDataBody(ch, h, config) {
 			var cols = (h != 'live') ? [3, 2, 4] : [2];
 
 			function renderSensorDataCell(c) {
-				return <td>{ch.data[c][i][j] || '-'}</td>;
+				return <td>{round(ch.data[c][i][j], 3) || '-'}</td>;
 			}
 
 			// render Min (data[3]), Avg (data[2]), and Max (data[4]) cells
