@@ -13,6 +13,7 @@ module.exports = keyMirror({
 
 	SESSION: null,
 	DEVICE: null,
+	VERSIONS: null,
 
 	ERROR: null,
 	CLEAR_ERRORS: null,

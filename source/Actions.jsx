@@ -103,6 +103,24 @@ var Actions = {
 			.fail(onError);
 	},
 
+	versions: function() {
+		if (!dispatchRequest('versions')) return;
+
+		return CmeAPI.versions()
+			.done(function(data) {
+				if (!data.versions) {
+
+					onError({ status: 500 }, 'error', 'Versions not found.');
+				
+				} else {
+
+					AppDispatcher.dispatch({ actionType: Constants.VERSIONS, data: data.versions });
+
+				}
+			})
+			.fail(onError);
+	},
+
 	config: function(obj) {
 		// obj is _cme['config'] or an object on _cme['config']
 		var key = Object.keys(obj)[0];
@@ -152,6 +170,8 @@ var Actions = {
 					if (data.config) {
 						AppDispatcher.dispatch({ actionType: Constants.SESSION, data: true });
 						AppDispatcher.dispatch({ actionType: Constants.CONFIG, data: data });
+
+						Actions.versions();
 					}
 				});
 
@@ -167,6 +187,8 @@ var Actions = {
 					CmeAPI.config(null)
 						.done(function(data) {
 							AppDispatcher.dispatch({ actionType: Constants.CONFIG, data: data });
+
+							Actions.versions();
 						})
 						.fail(onError);
 				})

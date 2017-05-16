@@ -33,7 +33,8 @@ var SettingsPanel = React.createClass({
 
 	getInitialState: function () {
 		return {
-			config: Store.getState().config
+			config: Store.getState().config,
+			versions: Store.getState().versions || {}
 		};
 	},
 
@@ -51,7 +52,8 @@ var SettingsPanel = React.createClass({
 		if (Object.keys(this.state.config).length <= 0)
 			return null;
 
-		var config = this.state.config;
+		var config = this.state.config,
+			versions = this.state.versions;
 
 		return (
 			<div className="panel" id="settings">
@@ -124,6 +126,30 @@ var SettingsPanel = React.createClass({
 								<li><a href='https://github.com/emn178/js-md5'>js-md5</a> project is released under the <a href='/legal/js-md5/LICENSE.txt'>MIT license</a>.</li>
 								<li><a href='https://github.com/doceme/py-spidev'>spidev</a> Python project is licensed under the <a href='/legal/spidev/LICENSE.md'>GNU General Public License V2</a>.</li>
 							</ul>
+						</div>
+					</InputGroup>
+
+					<InputGroup title="About" id='about'>
+						<div>
+							<p>Several software modules make up the TracVision&trade; monitoring system.</p>
+
+							<table>
+								<thead>
+									<tr><th>Module</th><th>Recovery</th><th>Normal</th></tr>
+								</thead>
+								<tbody>
+									{
+										Object.keys(versions).map(function(item, i) {
+											var v = versions[item] || ['--', '--'];
+
+											return (
+												<tr key={'ver_' + i}><td>{item}</td><td>{v[0]}</td><td>{v[1]}</td></tr>
+											)
+										})
+									}
+								</tbody>
+							</table>
+
 						</div>
 					</InputGroup>
 

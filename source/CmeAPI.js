@@ -47,6 +47,16 @@ var CmeAPI = {
 		});
 	},
 
+	versions: function() {
+		return $.ajax({
+			url: API.device + '/versions/',
+			type: 'GET',
+			contentType: 'application/json; charset=UTF-8',
+			data: null,
+			dataType: 'json'		
+		});
+	},
+
 	config: function(obj) {
 		
 		function configItemToUrl(item) {

@@ -17,6 +17,7 @@ var EventEmitter = require('events').EventEmitter;
 
 var _device = {};
 var _config = {};
+var _versions = {};
 var _errors = [];
 var _isLoggedIn = false;
 var _isSubmitting = false;
@@ -34,6 +35,7 @@ var Store = Object.assign({}, EventEmitter.prototype, {
 		return {
 			device: _device, // { modelNumber: <string>, serialNumber: <string>, firmware: <string> }
 			config: _config, // { <cme_config> }
+			versions: _versions, // { /data/VERSIONS (served through API)}
 			errors: _errors, // [ <string> ]
 
 			// UI-polled states:
@@ -80,6 +82,10 @@ var Store = Object.assign({}, EventEmitter.prototype, {
 
 			case Constants.DEVICE: // a device object has been replied
 				_device = action.data;
+				break;
+
+			case Constants.VERSIONS: // load up device VERSIONS object
+				_versions = action.data;
 				break;
 
 			case Constants.SESSION: // a session object has been replied
