@@ -66,10 +66,12 @@ var CmeCalibrate = React.createClass({
 
 		var disable = !changesPending || this._anyInvalid(this.state.device) || this._anyInvalid(this.state.channels);
 
+		var productName = this.state.device.cme.productName;
+
 		return (
 			<div className="calibrate">
 
-				<h2>CME Factory Calibration<span className={changesPending ? '' : 'hidden'}>*</span></h2>
+				<h2>{productName}&trade; Factory Calibration<span className={changesPending ? '' : 'hidden'}>*</span></h2>
 				<hr />
 
 				<div className="section">
@@ -83,7 +85,7 @@ var CmeCalibrate = React.createClass({
 								<input type="radio" id='tab-0' name='tab-group-0' checked={this.state.activeDevTabIndex == 0} onChange={this._activateDevTab} />
 								<label className={"tab-label" + (this.state.device.cme.unlocked ? '' : ' icon-lock')} 
 									title={this.state.device.cme.unlocked ? '' : 'This information set by device OEM'}
-									htmlFor='tab-0'>CME</label>
+									htmlFor='tab-0'>{productName}&trade; Module</label>
 
 								<div className="tab-panel">
 									<div className="tab-content">
@@ -120,7 +122,7 @@ var CmeCalibrate = React.createClass({
 
 							<div className="tab">
 								<input type="radio" id='tab-1' name='tab-group-0' checked={this.state.activeDevTabIndex == 1} onChange={this._activateDevTab} />
-								<label className="tab-label" htmlFor='tab-1'>Host</label>
+								<label className="tab-label" htmlFor='tab-1'>Host Equipment</label>
 
 								<div className="tab-panel">
 									<div className="tab-content">
