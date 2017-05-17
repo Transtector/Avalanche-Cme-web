@@ -55,7 +55,7 @@ var CmeCalibrate = React.createClass({
 
 		// read device info
 		this._getDeviceConfig();
-		this._getChannelConfig();
+		this._getChannelsConfig();
 	},
 
 	render: function() {
@@ -195,7 +195,15 @@ var CmeCalibrate = React.createClass({
 			.fail(error);
 	},
 
-	_getChannelConfig: function() {
+	_saveDeviceConfig: function() {
+		var _this = this;
+
+		CmeAPI.device(this.state.device)
+			.done(_this._getDeviceConfig)
+			.fail(error);
+	},
+
+	_getChannelsConfig: function() {
 		var _this = this;
 		// Send a request to populate the data array for the identified channel.
 		// We're not using the Action & Store to monitor channel data, however, as it
@@ -217,6 +225,26 @@ var CmeCalibrate = React.createClass({
 				});
 			})
 			.fail(error);
+	},
+
+	_saveChannelsConfig: function() {
+		this.state.channels.forEach(function(ch) {
+			var s_cfgs = {};
+			ch.sensors.forEach(function(s) {
+				var _cfg = {}
+				for (var s_key in s) {
+					// copy all props except 'id'
+					if (s_key != 'id') {
+						_cfg[s_key] = s[s_key];
+					}
+				}
+				s_cfgs[s.id] = _cfg
+			});
+			CmeAPI.channelConfig(ch.id, s_cfgs)
+				.done(console.log('Channel [' + ch.id + '] saved.'))
+				.fail(error);
+		});
+		this._getChannelsConfig();
 	},
 
 	_renderChannelTab: function(ch, index) {
@@ -381,31 +409,8 @@ var CmeCalibrate = React.createClass({
 	},
 
 	_save: function() {
-		var _this = this;
-		
-		this.state.channels.forEach(function(ch) {
-			var s_cfgs = {};
-			ch.sensors.forEach(function(s) {
-				var _cfg = {}
-				for (var s_key in s) {
-					// copy all props except 'id'
-					if (s_key != 'id') {
-						_cfg[s_key] = s[s_key];
-					}
-				}
-				s_cfgs[s.id] = _cfg
-			});
-			CmeAPI.channelConfig(ch.id, s_cfgs)
-				.done(function(ch_cfg){
-					ch_cfg['id'] = ch;
-					_this._cache.channels.push(ch_cfg);
-					_this._cache.channels.sort(function(a, b) {
-						return parseInt(a.id.slice(2)) - parseInt(b.id.slice(2));
-					});
-					_this.setState({ channels: _this._validateChannels(_this._cache.channels) });
-				})
-				.fail(error);
-		});
+		this._saveDeviceConfig();
+		this._saveChannelsConfig();		
 	},
 
 	_restart: function() {
