@@ -22,6 +22,7 @@ mkdir -p ${DIST}
 pushd ${DIST}
 cp ${SRC}/*.html .
 cp ${SRC}/*.otf .
+cp ${SRC}/package.json .
 cp ${SRC}/favicon.ico .
 cp ${SRC}/bundle.js .
 cp ${SRC}/style.css .
