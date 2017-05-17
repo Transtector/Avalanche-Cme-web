@@ -198,7 +198,7 @@ var CmeCalibrate = React.createClass({
 	_saveDeviceConfig: function() {
 		var _this = this;
 
-		CmeAPI.device(this.state.device)
+		CmeAPI.device({ device: this.state.device })
 			.done(_this._getDeviceConfig)
 			.fail(error);
 	},
