@@ -176,7 +176,7 @@ var SettingsPanel = React.createClass({
 
 		if (this.state.config[group][key] == val) return; // skip if no change
 
-		obj = {};
+		var obj = {};
 		obj[key] = val;
 		Actions.config(obj); // config() just takes the key and will search config groups (for now)
 	}
