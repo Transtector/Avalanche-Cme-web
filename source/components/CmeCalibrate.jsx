@@ -211,6 +211,7 @@ var CmeCalibrate = React.createClass({
 		// CmeAPI call directly, and process the return.
 		CmeAPI.channels()
 			.done(function(chs) {
+				_this._cache.channels = [];
 				chs['channels'].forEach(function(ch) {
 					CmeAPI.channelConfig(ch)
 						.done(function(ch_cfg){
@@ -230,7 +231,7 @@ var CmeCalibrate = React.createClass({
 	_saveChannelsConfig: function() {
 		this.state.channels.forEach(function(ch) {
 			var s_cfgs = {};
-			ch.sensors.forEach(function(s) {
+			Object.values(ch.sensors).forEach(function(s) {
 				var _cfg = {}
 				for (var s_key in s) {
 					// copy all props except 'id'
@@ -252,7 +253,8 @@ var CmeCalibrate = React.createClass({
 		// Users can set these sensor attributes currently:
 		//		Range [null, null] (min, max; numbers) : used in the threshold UI displays which will NOT be shown w/o a defined range
 		//		Threshold [0] (number) : sensor value reads return 0 if not above the threshold value
-		//		Scale [1] (number) : sensor value multiplier used to scale/calibrate the raw sensor value 
+		//		Scale [1] (number) : sensor value multiplier used to scale/calibrate the raw sensor value by coarse front-end (voltage divider network)
+		//		Cal [0] (number) : +/- calibration factor to adjust for front-end component variations
 
 		return (
 			<div key={ch.id} className="tab">
@@ -333,6 +335,12 @@ var CmeCalibrate = React.createClass({
 												className={s.scale_invalid ? 'error' : ''}  readOnly={s.type == 'PIB'}
 												value={s.scale} onChange={this._channelChange} />
 										</div>
+										<div className="lineitem">
+											<label htmlFor={prefix + ".cal"}>Cal Factor</label>
+											<input type="text"  id={prefix + ".cal"} name={prefix + ".cal"} 
+												className={s.cal_invalid ? 'error' : ''}  readOnly={s.type == 'PIB'}
+												value={s.cal} onChange={this._channelChange} />
+										</div>
 
 									</div>
 								)
@@ -353,38 +361,57 @@ var CmeCalibrate = React.createClass({
 		return this.state.channels.some(function(ch) {
 			var changes = false,
 				changed = [];
-
 			
 			var cached_ch = this._cache.channels.find(function(cch) {
 				return ch.id == cch.id;
 			});
-			
 			if (!cached_ch) return true;
 
-			// Channel attributes to check
-			changes = ['bus_index', 'bus_type', 'device_index', 'device_type'].some(function(attr) {
-				return ch[attr] != cached_ch[attr];
+			// Check channel attributes
+			changes = Object.keys(cached_ch).some(function(key) {
+				
+				// Don't compare sub-objects here - just plain attributes
+				// Sensors get checked below, and RRA's are ignored for now.
+				if (typeof cached_ch[key] == 'object')
+					return false;
+
+				return ch[key] != cached_ch[key];
 			});
 
+			// Check channel sensor attributes
 			changes |= Object.values(ch.sensors).some(function(s) {
+
 				var cached_s = Object.values(cached_ch.sensors).find(function(cs){
 					return s.id == cs.id;
 				});
-
 				if (!cached_s) return true;
 
-				return ['type', 'units', 'scale', 'threshold', 'range', 'register'].some(function(attr) {
-					if (attr == 'range') {
-						return [0, 1].some(function(r){
-							return s[attr][r] != cached_s[attr][r];
-						});
+				return Object.keys(cached_s).some(function(key) {
+					if (key === 'sources') {
+						return false;
 					}
 
-					if (s[attr] != cached_s[attr])
-						changed.push(s.id + ':' + attr);
-					return s[attr] != cached_s[attr];
+					if (key === 'range') {
+
+						if (s.range[0] != cached_s.range[0] || s.range[1] != cached_s.range[1]) {
+							changed.push(ch.id + ':' + s.id + ':' + key + ' ==> cached[' + key + '] = ' + cached_s[key] + ' updated[' + key + '] = ' + s[key]);
+							return true;
+						}
+
+					} else {
+
+						if (s[key] != cached_s[key]) {
+							changed.push(ch.id + ':' + s.id + ':' + key + ' ==> cached[' + key + '] = ' + cached_s[key] + ' updated[' + key + '] = ' + s[key]);
+							return true;
+						}
+					}
+
+					return false;
 				});
 			});
+
+			//if (changes)
+			//	console.log("changed:  " + changed.join(','));
 
 			return changes;
 		}, this);
@@ -438,26 +465,23 @@ var CmeCalibrate = React.createClass({
 		var channels = [],
 			chId = e.target.id.split('.')[0], // ch0
 			sId = e.target.id.split('.')[1], // s0
-			a = e.target.id.split('.')[2], // range, threshold, scale
+			a = e.target.id.split('.')[2], // range, threshold, scale, ...
 			v = e.target.value;
 
 		channels = this.state.channels.map(function(ch) {
-			var newCh = $.extend(true, {}, ch);
-			newCh.sensors = [];
+			var newCh = JSON.parse(JSON.stringify(ch));
 
-			newCh.sensors = ch.sensors.map(function(s) {
-				var newS = $.extend(true, {}, s);
-
+			Object.values(newCh.sensors).forEach(function(s) {
 				if (ch.id == chId && s.id == sId) {
 					if (a !== 'range') {
-						newS[a] = v;
+						s[a] = v;
 					} else {
 						var d = e.target.id.split('.')[3] == 'min' ? 0 : 1; // min or max
-						newS['range'][d] = v;
+						s['range'][d] = v;
 					}
 				}
-				return newS;
 			});
+
 			return newCh;
 		})
 
@@ -480,34 +504,31 @@ var CmeCalibrate = React.createClass({
 	},
 
 	_validateChannels: function(channels) {
-		// Currently we're only allowing range, threshold, and scale
+		// Currently we're only allowing range, threshold, scale, and cal
 		// to be set and they must all be numerics.
 		return channels.map(function(ch) {
-			var newCh = $.extend(true, {}, ch);
 
-			newCh.sensors = [];
-			newCh.sensors = Object.values(ch.sensors).map(function (s) {
-				var newS = $.extend(true, {}, s);
+			var newCh = JSON.parse(JSON.stringify(ch));
 
-				if ((!newS.range || newS.range.length !== 2 || !isNumeric(newS.range[0]) || !isNumeric(newS.range[1])) ||
-					(isNumeric(newS.range[0]) && isNumeric(newS.range[1]) && parseFloat(newS.range[0]) >= parseFloat(newS.range[1])))
+			Object.values(newCh.sensors).forEach(function (s) {
+
+				// validate range
+				if ((!s.range || s.range.length !== 2 || !isNumeric(s.range[0]) || !isNumeric(s.range[1])) ||
+					(isNumeric(s.range[0]) && isNumeric(s.range[1]) && parseFloat(s.range[0]) >= parseFloat(s.range[1])))
 					
-					newS['range_invalid'] = true;
-
+					s['range_invalid'] = true;
 				else
-					delete newS['range_invalid'];
+					delete s['range_invalid'];
 
-				if (!isNumeric(newS.threshold) && newS.type != 'PIB')
-					newS['threshold_invalid'] = true;
-				else
-					delete newS['threshold_invalid'];
-
-				if (!isNumeric(newS.scale) && newS.type != 'PIB')
-					newS['scale_invalid'] = true;
-				else
-					delete newS['scale_invalid'];
-
-				return newS;
+				if (s.type != 'PIB') {
+					['threshold', 'scale', 'cal'].forEach(function(t){
+						if (!isNumeric(s[t])) {
+							s[t + '_invalid'] = true;
+						} else {
+							delete s[t + '_invalid'];
+						}
+					});
+				}
 			});
 
 			return newCh;
